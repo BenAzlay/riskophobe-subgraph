@@ -1,60 +1,23 @@
-type FeesClaimed @entity(immutable: true) {
-  id: Bytes!
-  creator: Bytes! # address
-  token: Bytes! # address
-  amount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type Offer @entity {
+  id: ID!
+  creator: Bytes!
+  collateralToken: Bytes!
+  soldToken: Bytes!
+  soldTokenAmount: BigInt!
+  exchangeRate: BigInt!
 }
 
-type OfferCreated @entity(immutable: true) {
-  id: Bytes!
-  offerId: BigInt! # uint256
-  creator: Bytes! # address
-  collateralToken: Bytes! # address
-  soldToken: Bytes! # address
-  soldTokenAmount: BigInt! # uint256
-  exchangeRate: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type Deposit @entity {
+  id: ID!
+  offerId: BigInt!
+  participant: Bytes!
+  soldTokenAmount: BigInt!
+  netCollateralAmount: BigInt!
 }
 
-type OfferRemoved @entity(immutable: true) {
-  id: Bytes!
-  offerId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type SoldTokensAdded @entity(immutable: true) {
-  id: Bytes!
-  offerId: BigInt! # uint256
-  amount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TokensBought @entity(immutable: true) {
-  id: Bytes!
-  offerId: BigInt! # uint256
-  participant: Bytes! # address
-  soldTokenAmount: BigInt! # uint256
-  netCollateralAmount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TokensReturned @entity(immutable: true) {
-  id: Bytes!
-  offerId: BigInt! # uint256
-  participant: Bytes! # address
-  collateralAmount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type CreatorFee @entity {
+  id: ID!
+  creator: Bytes!
+  token: Bytes!
+  amount: BigInt!
 }

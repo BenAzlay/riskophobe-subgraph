@@ -1,107 +1,41 @@
+import { BigInt } from "@graphprotocol/graph-ts";
 import {
-  FeesClaimed as FeesClaimedEvent,
-  OfferCreated as OfferCreatedEvent,
-  OfferRemoved as OfferRemovedEvent,
-  SoldTokensAdded as SoldTokensAddedEvent,
-  TokensBought as TokensBoughtEvent,
-  TokensReturned as TokensReturnedEvent
-} from "../generated/RiskophobeProtocol/RiskophobeProtocol"
-import {
-  FeesClaimed,
   OfferCreated,
-  OfferRemoved,
-  SoldTokensAdded,
   TokensBought,
-  TokensReturned
-} from "../generated/schema"
+  FeesClaimed,
+} from "../generated/RiskophobeProtocol/RiskophobeProtocol";
+import { Offer, Deposit, CreatorFee } from "../generated/schema";
 
-export function handleFeesClaimed(event: FeesClaimedEvent): void {
-  let entity = new FeesClaimed(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.creator = event.params.creator
-  entity.token = event.params.token
-  entity.amount = event.params.amount
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+export function handleOfferCreated(event: OfferCreated): void {
+  let offer = new Offer(event.params.offerId.toString());
+  offer.creator = event.params.creator;
+  offer.collateralToken = event.params.collateralToken;
+  offer.soldToken = event.params.soldToken;
+  offer.soldTokenAmount = event.params.soldTokenAmount;
+  offer.exchangeRate = event.params.exchangeRate;
+  offer.save();
 }
 
-export function handleOfferCreated(event: OfferCreatedEvent): void {
-  let entity = new OfferCreated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.offerId = event.params.offerId
-  entity.creator = event.params.creator
-  entity.collateralToken = event.params.collateralToken
-  entity.soldToken = event.params.soldToken
-  entity.soldTokenAmount = event.params.soldTokenAmount
-  entity.exchangeRate = event.params.exchangeRate
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+export function handleTokensBought(event: TokensBought): void {
+  let depositId =
+    event.params.offerId.toString() + "-" + event.params.participant.toHex();
+  let deposit = new Deposit(depositId);
+  deposit.offerId = event.params.offerId;
+  deposit.participant = event.params.participant;
+  deposit.soldTokenAmount = event.params.soldTokenAmount;
+  deposit.netCollateralAmount = event.params.netCollateralAmount;
+  deposit.save();
 }
 
-export function handleOfferRemoved(event: OfferRemovedEvent): void {
-  let entity = new OfferRemoved(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.offerId = event.params.offerId
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleSoldTokensAdded(event: SoldTokensAddedEvent): void {
-  let entity = new SoldTokensAdded(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.offerId = event.params.offerId
-  entity.amount = event.params.amount
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleTokensBought(event: TokensBoughtEvent): void {
-  let entity = new TokensBought(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.offerId = event.params.offerId
-  entity.participant = event.params.participant
-  entity.soldTokenAmount = event.params.soldTokenAmount
-  entity.netCollateralAmount = event.params.netCollateralAmount
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleTokensReturned(event: TokensReturnedEvent): void {
-  let entity = new TokensReturned(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.offerId = event.params.offerId
-  entity.participant = event.params.participant
-  entity.collateralAmount = event.params.collateralAmount
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+export function handleFeesClaimed(event: FeesClaimed): void {
+  let feeId = event.params.creator.toHex() + "-" + event.params.token.toHex();
+  let creatorFee = CreatorFee.load(feeId);
+  if (creatorFee == null) {
+    creatorFee = new CreatorFee(feeId);
+    creatorFee.creator = event.params.creator;
+    creatorFee.token = event.params.token;
+    creatorFee.amount = BigInt.fromI32(0);
+  }
+  creatorFee.amount = creatorFee.amount.plus(event.params.amount);
+  creatorFee.save();
 }
