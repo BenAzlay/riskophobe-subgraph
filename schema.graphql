@@ -9,7 +9,7 @@ type Offer @entity {
   creator: Bytes!
   startTime: BigInt!
   endTime: BigInt!
-  creatorFeeBp: Int!
+  creatorFeeBp: BigInt!
   collateralToken: Token!
   soldToken: Token!
   soldTokenAmount: BigInt!
@@ -28,6 +28,6 @@ type Deposit @entity {
 type CreatorFee @entity {
   id: ID!
   creator: Bytes!
-  token: Bytes!
+  token: Token!
   amount: BigInt!
 }

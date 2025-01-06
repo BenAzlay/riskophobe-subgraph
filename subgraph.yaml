@@ -31,4 +31,10 @@ dataSources:
           handler: handleTokensBought
         - event: FeesClaimed(indexed address,indexed address,uint256)
           handler: handleFeesClaimed
+        - event: SoldTokensAdded(indexed uint256,uint256)
+          handler: SoldTokensAdded
+        - event: TokensReturned(indexed uint256,indexed address,uint256)
+          handler: TokensReturned
+        - event: OfferRemoved(indexed uint256)
+          handler: OfferRemoved
       file: ./src/riskophobe-protocol.ts
