@@ -1,18 +1,50 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   OfferCreated,
   TokensBought,
   FeesClaimed,
+  RiskophobeProtocol,
 } from "../generated/RiskophobeProtocol/RiskophobeProtocol";
-import { Offer, Deposit, CreatorFee } from "../generated/schema";
+import { Offer, Deposit, CreatorFee, Token } from "../generated/schema";
+import { ERC20 } from "../generated/RiskophobeProtocol/ERC20";
+
+function getOrCreateToken(address: Address): Token {
+  let token = Token.load(address.toHex());
+  if (token == null) {
+    token = new Token(address.toHex());
+    let erc20 = ERC20.bind(address);
+    let symbolCall = erc20.try_symbol();
+    let decimalsCall = erc20.try_decimals();
+
+    token.symbol = symbolCall.reverted ? "" : symbolCall.value;
+    token.decimals = decimalsCall.reverted ? 18 : decimalsCall.value;
+    token.save();
+  }
+  return token;
+}
 
 export function handleOfferCreated(event: OfferCreated): void {
   let offer = new Offer(event.params.offerId.toString());
   offer.creator = event.params.creator;
-  offer.collateralToken = event.params.collateralToken;
-  offer.soldToken = event.params.soldToken;
+  
+  // Populate collateralToken and soldToken with relevant metadata
+  let collateralToken = getOrCreateToken(event.params.collateralToken);
+  let soldToken = getOrCreateToken(event.params.soldToken);
+  offer.collateralToken = collateralToken.id;
+  offer.soldToken = soldToken.id;
+
   offer.soldTokenAmount = event.params.soldTokenAmount;
   offer.exchangeRate = event.params.exchangeRate;
+
+  // Additional attributes not included in the event but part of the contract state
+  let contract = RiskophobeProtocol.bind(event.address);
+  let offerDetails = contract.offers(event.params.offerId);
+
+  offer.startTime = offerDetails.getStartTime();
+  offer.endTime = offerDetails.getEndTime();
+  offer.creatorFeeBp = offerDetails.getCreatorFeeBp();
+  offer.collateralBalance = offerDetails.getCollateralBalance();
+
   offer.save();
 }
 

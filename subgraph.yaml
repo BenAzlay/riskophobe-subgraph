@@ -22,6 +22,8 @@ dataSources:
       abis:
         - name: RiskophobeProtocol
           file: ./abis/RiskophobeProtocol.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: OfferCreated(indexed uint256,indexed address,address,address,uint256,uint256)
           handler: handleOfferCreated
