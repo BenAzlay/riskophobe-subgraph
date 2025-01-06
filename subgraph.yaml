@@ -19,6 +19,7 @@ dataSources:
         - Offer
         - Deposit
         - CreatorFee
+        - Token
       abis:
         - name: RiskophobeProtocol
           file: ./abis/RiskophobeProtocol.json
@@ -32,9 +33,9 @@ dataSources:
         - event: FeesClaimed(indexed address,indexed address,uint256)
           handler: handleFeesClaimed
         - event: SoldTokensAdded(indexed uint256,uint256)
-          handler: SoldTokensAdded
+          handler: handleSoldTokensAdded
         - event: TokensReturned(indexed uint256,indexed address,uint256)
-          handler: TokensReturned
+          handler: handleTokensReturned
         - event: OfferRemoved(indexed uint256)
-          handler: OfferRemoved
+          handler: handleOfferRemoved
       file: ./src/riskophobe-protocol.ts
