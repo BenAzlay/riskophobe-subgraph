@@ -1,0 +1,8 @@
+{
+  "sepolia": {
+    "RiskophobeProtocol": {
+      "address": "0x3043370D7Bd2209C6C2c19Bd505F12F17F02e6c4",
+      "startBlock": 7428591
+    }
+  }
+}
