@@ -4,5 +4,11 @@
       "address": "0x3043370D7Bd2209C6C2c19Bd505F12F17F02e6c4",
       "startBlock": 7428591
     }
+  },
+  "base": {
+    "RiskophobeProtocol": {
+      "address": "0xb5f87ebD778d7a2ee3e97Ce70B1cAaa901A53709",
+      "startBlock": 25043986
+    }
   }
 }

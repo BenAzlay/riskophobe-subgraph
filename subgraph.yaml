@@ -1,16 +1,16 @@
 specVersion: 0.0.4
 description: Subgraph for RiskophobeProtocol
-repository: https://github.com/your-repository
+repository: https://github.com/BenAzlay/riskophobe-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
     name: RiskophobeProtocol
-    network: mainnet
+    network: base
     source:
-      address: "0x3043370D7Bd2209C6C2c19Bd505F12F17F02e6c4"
+      address: "0xb5f87ebD778d7a2ee3e97Ce70B1cAaa901A53709"
       abi: RiskophobeProtocol
-      startBlock: 12345678
+      startBlock: 25043986
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
