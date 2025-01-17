@@ -30,7 +30,7 @@ function getOrCreateToken(address: Address): Token {
 export function handleOfferCreated(event: OfferCreated): void {
   let offer = new Offer(event.params.offerId.toString());
   offer.creator = event.params.creator;
-  
+
   // Populate collateralToken and soldToken with relevant metadata
   let collateralToken = getOrCreateToken(event.params.collateralToken);
   let soldToken = getOrCreateToken(event.params.soldToken);
@@ -71,7 +71,8 @@ export function handleOfferRemoved(event: OfferRemoved): void {
 
 // DEPOSIT
 export function handleTokensBought(event: TokensBought): void {
-  let depositId = event.params.offerId.toString() + "-" + event.params.participant.toHex();
+  let depositId =
+    event.params.offerId.toString() + "-" + event.params.participant.toHex();
   let deposit = Deposit.load(depositId);
   if (deposit == null) {
     deposit = new Deposit(depositId);
@@ -80,17 +81,34 @@ export function handleTokensBought(event: TokensBought): void {
     deposit.soldTokenAmount = event.params.soldTokenAmount;
     deposit.netCollateralAmount = event.params.netCollateralAmount;
   } else {
-    deposit.soldTokenAmount = deposit.soldTokenAmount.plus(event.params.soldTokenAmount);
-    deposit.netCollateralAmount = deposit.netCollateralAmount.plus(event.params.netCollateralAmount);
+    deposit.soldTokenAmount = deposit.soldTokenAmount.plus(
+      event.params.soldTokenAmount
+    );
+    deposit.netCollateralAmount = deposit.netCollateralAmount.plus(
+      event.params.netCollateralAmount
+    );
   }
   deposit.save();
 
-  // Update creatorFee
+  // Update offer
   let offer = Offer.load(event.params.offerId.toString());
   if (offer == null) return; // Offer must exist for a valid calculation
 
-  let creatorFeeBp = offer.creatorFeeBp;
   let exchangeRate = offer.exchangeRate;
+
+  // Increase collateralBalance
+  offer.collateralBalance = offer.collateralBalance.plus(
+    event.params.netCollateralAmount
+  );
+
+  // Decrease soldTokenAmount
+  let soldTokenDecrease = event.params.soldTokenAmount;
+  offer.soldTokenAmount = offer.soldTokenAmount.minus(soldTokenDecrease);
+
+  offer.save();
+
+  // Update creatorFee
+  let creatorFeeBp = offer.creatorFeeBp;
 
   // Calculate the fee added to the creator based on the sold token amount and exchange rate
   let feeAmount = event.params.soldTokenAmount
@@ -112,18 +130,39 @@ export function handleTokensBought(event: TokensBought): void {
 }
 
 export function handleTokensReturned(event: TokensReturned): void {
-  let depositId = event.params.offerId.toString() + "-" + event.params.participant.toHex();
+  let depositId =
+    event.params.offerId.toString() + "-" + event.params.participant.toHex();
   let deposit = Deposit.load(depositId);
   if (deposit == null) {
     return; // No such deposit exists; ignore this event.
   }
-  deposit.netCollateralAmount = deposit.netCollateralAmount.minus(event.params.collateralAmount);
+  deposit.netCollateralAmount = deposit.netCollateralAmount.minus(
+    event.params.collateralAmount
+  );
   deposit.save();
+
+  // Update the Offer entity
+  let offer = Offer.load(event.params.offerId.toString());
+  if (offer == null) return;
+
+  // Decrease collateralBalance
+  offer.collateralBalance = offer.collateralBalance.minus(
+    event.params.collateralAmount
+  );
+
+  // Increase soldTokenAmount using the updated formula
+  let soldTokenIncrease = event.params.collateralAmount
+    .times(BigInt.fromI32(10).pow(18))
+    .div(offer.exchangeRate);
+  offer.soldTokenAmount = offer.soldTokenAmount.plus(soldTokenIncrease);
+
+  offer.save();
 }
 
 // CREATOR FEE
 export function handleFeesClaimed(event: FeesClaimed): void {
-  let creatorFeeId = event.params.creator.toHex() + "-" + event.params.token.toHex();
+  let creatorFeeId =
+    event.params.creator.toHex() + "-" + event.params.token.toHex();
   let creatorFee = CreatorFee.load(creatorFeeId);
   if (creatorFee == null) {
     return; // No creator fee exists for this combination, ignore the event
