@@ -133,27 +133,28 @@ export function handleTokensReturned(event: TokensReturned): void {
   let depositId =
     event.params.offerId.toString() + "-" + event.params.participant.toHex();
   let deposit = Deposit.load(depositId);
-  if (deposit == null) {
-    return; // No such deposit exists; ignore this event.
-  }
-  deposit.netCollateralAmount = deposit.netCollateralAmount.minus(
-    event.params.collateralAmount
-  );
-  deposit.save();
-
-  // Update the Offer entity
   let offer = Offer.load(event.params.offerId.toString());
-  if (offer == null) return;
-
-  // Decrease collateralBalance
-  offer.collateralBalance = offer.collateralBalance.minus(
-    event.params.collateralAmount
-  );
-
-  // Increase soldTokenAmount using the updated formula
+  // Update the Offer entity
+  if (offer == null || deposit == null) return;
+  // calculate new increased soldTokenAmount using the exchange rate formula
   let soldTokenIncrease = event.params.collateralAmount
     .times(BigInt.fromI32(10).pow(18))
     .div(offer.exchangeRate);
+
+  // Decrease deposit collateralAmount
+  deposit.netCollateralAmount = deposit.netCollateralAmount.minus(
+    event.params.collateralAmount
+  );
+  // Increase deposit soldTokenAmount
+  deposit.soldTokenAmount = deposit.soldTokenAmount.plus(soldTokenIncrease);
+
+  deposit.save();
+
+  // Decrease offer collateralBalance
+  offer.collateralBalance = offer.collateralBalance.minus(
+    event.params.collateralAmount
+  );
+  // Increase offer soldTokenAmount
   offer.soldTokenAmount = offer.soldTokenAmount.plus(soldTokenIncrease);
 
   offer.save();
