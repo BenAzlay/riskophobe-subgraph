@@ -21,7 +21,6 @@ type Deposit @entity {
   id: ID!
   offerId: BigInt!
   participant: Bytes!
-  soldTokenAmount: BigInt!
   netCollateralAmount: BigInt!
 }
 
