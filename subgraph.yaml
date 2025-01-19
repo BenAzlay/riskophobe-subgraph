@@ -8,7 +8,7 @@ dataSources:
     name: RiskophobeProtocol
     network: base
     source:
-      address: "0xb5f87ebD778d7a2ee3e97Ce70B1cAaa901A53709"
+      address: "0x0bBEeEab55594F1A03A2b34A6e454fb1d85519e4"
       abi: RiskophobeProtocol
       startBlock: 25043986
     mapping:
@@ -34,7 +34,7 @@ dataSources:
           handler: handleFeesClaimed
         - event: SoldTokensAdded(indexed uint256,uint256)
           handler: handleSoldTokensAdded
-        - event: TokensReturned(indexed uint256,indexed address,uint256)
+        - event: TokensReturned(indexed uint256,indexed address,uint256,uint256)
           handler: handleTokensReturned
         - event: OfferRemoved(indexed uint256)
           handler: handleOfferRemoved

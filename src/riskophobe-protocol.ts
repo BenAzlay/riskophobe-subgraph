@@ -71,31 +71,35 @@ export function handleOfferRemoved(event: OfferRemoved): void {
 
 // DEPOSIT
 export function handleTokensBought(event: TokensBought): void {
+  // Get offer
+  let offer = Offer.load(event.params.offerId.toString());
+  if (offer == null) return; // Offer must exist for a valid calculation
+
   let depositId =
     event.params.offerId.toString() + "-" + event.params.participant.toHex();
   let deposit = Deposit.load(depositId);
+
+  // Calculate earned creator fee
+  let feeAmount = event.params.collateralAmount
+    .times(offer.creatorFeeBp)
+    .div(BigInt.fromI32(10000));
+  // Calculate netCollateralAmount from collateralAmount and feeAmount
+  let netCollateralAmount = event.params.collateralAmount.minus(feeAmount);
+
   if (deposit == null) {
     deposit = new Deposit(depositId);
     deposit.offerId = event.params.offerId;
     deposit.participant = event.params.participant;
-    deposit.netCollateralAmount = event.params.netCollateralAmount;
+    deposit.netCollateralAmount = netCollateralAmount;
   } else {
-    deposit.netCollateralAmount = deposit.netCollateralAmount.plus(
-      event.params.netCollateralAmount
-    );
+    deposit.netCollateralAmount =
+      deposit.netCollateralAmount.plus(netCollateralAmount);
   }
   deposit.save();
 
   // Update offer
-  let offer = Offer.load(event.params.offerId.toString());
-  if (offer == null) return; // Offer must exist for a valid calculation
-
-  let exchangeRate = offer.exchangeRate;
-
   // Increase collateralBalance
-  offer.collateralBalance = offer.collateralBalance.plus(
-    event.params.netCollateralAmount
-  );
+  offer.collateralBalance = offer.collateralBalance.plus(netCollateralAmount);
 
   // Decrease soldTokenAmount
   let soldTokenDecrease = event.params.soldTokenAmount;
@@ -104,14 +108,6 @@ export function handleTokensBought(event: TokensBought): void {
   offer.save();
 
   // Update creatorFee
-  let creatorFeeBp = offer.creatorFeeBp;
-
-  // Calculate the fee added to the creator based on the sold token amount and exchange rate
-  let feeAmount = event.params.soldTokenAmount
-    .times(exchangeRate)
-    .times(creatorFeeBp)
-    .div(BigInt.fromI32(10000)); // Convert basis points to percentage
-
   let creatorFeeId = offer.creator.toHex() + "-" + offer.collateralToken;
   let creatorFee = CreatorFee.load(creatorFeeId);
   if (creatorFee == null) {
@@ -144,12 +140,10 @@ export function handleTokensReturned(event: TokensReturned): void {
   offer.collateralBalance = offer.collateralBalance.minus(
     event.params.collateralAmount
   );
-  // calculate new increased soldTokenAmount using the exchange rate formula
-  let soldTokenIncrease = event.params.collateralAmount
-    .times(offer.exchangeRate)
-    .div(BigInt.fromI32(10).pow(18));
   // Increase offer soldTokenAmount
-  offer.soldTokenAmount = offer.soldTokenAmount.plus(soldTokenIncrease);
+  offer.soldTokenAmount = offer.soldTokenAmount.plus(
+    event.params.soldTokenAmount
+  );
 
   offer.save();
 }
